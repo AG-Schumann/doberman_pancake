@@ -53,8 +53,8 @@ class RevPi(Sensor):
                 }
         self.reading_pattern = re.compile(('(?P<value>%s)' % utils.number_regex).encode())
         self.command_patterns = [
-                (re.compile(r'write module (?P<module>\d+) output (?P<ch>1|2): (?P<value>\d{1,5})'),                    lambda x: self.commands['writeOutput'].format(**x.groupdict())),
-
+                (re.compile(r'write module (?P<module>\d+) output (?P<ch>1|2): (?P<value>\d{1,5})'),
+                    lambda x: self.commands['writeOutput'].format(**x.groupdict()))
                  ]
 
     def ProcessOneReading(self, name, data):
