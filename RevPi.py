@@ -27,7 +27,6 @@ class RevPi(Sensor):
                     ret['retcode'] = -2
                 if msg[0] == 'r':
                     ret['data'] = int.from_bytes(f.read(self.bytes_per_channel), 'little')
-                    self.logger.debug("Sent %s got %s" % (message, ret['data']))
                 elif msg[0] == 'w':
                     if int(msg[4]) > (1 << 16):
                         pass
@@ -51,23 +50,25 @@ class RevPi(Sensor):
                 'readRTD' : 'r,{module},r,{ch}',
                 'writeOutput' : 'w,{module},o,{ch},{value}'
                 }
-        self.reading_pattern = re.compile(('(?P<value>%s)' % utils.number_regex).encode())
+        #self.reading_pattern = re.compile(('(?P<value>\d+)').encode())
         self.command_patterns = [
-                (re.compile(r'write module (?P<module>\d+) output (?P<ch>1|2): (?P<value>\d{1,5})'),                    lambda x: self.commands['writeOutput'].format(**x.groupdict())),
+                (re.compile(r'write module (?P<module>\d+) output (?P<ch>1|2): (?P<value>\d{1,5})'),
+                    lambda x: self.commands['writeOutput'].format(**x.groupdict())),
 
                  ]
 
     def ProcessOneReading(self, name, data):
 
         multiplier = {
-                'T_env' : 1.,
-                'Pressure_1' : 0.0004375,
-                'Pressure_2' : 0.0004375
+                'p_buffer' : 0.0004375,
+                'p_ts' : 0.0004375,
+                'p_xenon' : 0.0004309225
                 }
 
         offset = {
-                'T_env' : 1.,
-                'Pressure_1' : -1.75,
-                'Pressure_2' : -1.75
+
+                'p_buffer' : -1.75,
+                'p_ts' : -1.75,
+                'p_xenon' : -1.72369
                 }
-        return float(self.reading_pattern.search(data).group('value'))*multiplier[name]+offset[name]
+        return float(data)*multiplier[name]+offset[name]
