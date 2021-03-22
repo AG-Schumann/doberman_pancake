@@ -67,7 +67,9 @@ class RevPi(Sensor):
                 'p_pump_2': 0.0004309225,
                 'flow' : 1.0,
                 "p_TS":     0.0009355,
-                "temp_precool": 0.1
+                "temp_precool": 0.1,
+                "temp_nitcam": 0.1,
+                "m_loadcell_01": 18.75
                 }
 
         offset = {
@@ -77,6 +79,9 @@ class RevPi(Sensor):
                 'p_pump_2' : -1.72369,
                 'flow' : 0.0,
                 "p_TS":      -3.75,
-                "temp_precool": 0.0
+                "temp_precool": 0.0,
+                "temp_nitcam": 273.15,
+                "m_loadcell_01": -75000.0
                 }
         return float(data)*multiplier[name]+offset[name]
+
