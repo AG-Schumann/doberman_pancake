@@ -2,7 +2,7 @@ from Doberman import Sensor, utils
 import re
 
 
-class revpi_calliope(Sensor):
+class revpi(Sensor):
     """
     Class for RevolutionPi sensors
     """

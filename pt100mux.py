@@ -84,5 +84,5 @@ class pt100mux(Sensor):
         :param data: array of 8 current values in uA
         :returns: array of currents converted to temperatures
         """
-        temperatures = list(map(lambda x: 1/32 * (x - 10400) if x>=4000 else -1000, data))
+        temperatures = list(map(lambda x: 1/32 * (x - 10400), data))
         return temperatures
