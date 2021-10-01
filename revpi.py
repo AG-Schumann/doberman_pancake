@@ -14,13 +14,7 @@ class revpi(Sensor):
             'readRTD': 'r,{module},r,{ch}',
             'writeOutput': 'w,{module},o,{ch},{value}'
         }
-        # self.reading_pattern = re.compile(('(?P<value>\d+)').encode())
-        self.command_patterns = [
-            (re.compile(r'write module (?P<module>\d+) output (?P<ch>1|2): (?P<value>\d{1,5})'),
-             lambda x: self.commands['writeOutput'].format(**x.groupdict())),
-        ]
-
-    def send_recv(self, message):
+        self.command_pattern = re.compile(r"set module(\d+) (1|2) (\d{1,5})")
         self.bytes_per_module = 89
         self.bytes_per_channel = 2
         self.offset_by_type = {
@@ -28,6 +22,14 @@ class revpi(Sensor):
             'o': 29,
             'r': 21
         }
+
+    def execute_command(self, command):
+        """
+        """
+        if (m := self.command_pattern.match(command)):
+            return self.commands['writeOutput'].format(module=int(m[1]), ch=m[2], value=int(m[3]))
+
+    def send_recv(self, message):
         ret = {'retcode': 0, 'data': None}
         msg = message.split(',')  # msg = [<r|w>, <module>, <i|o|r>, <channel>, <value>]
         try:

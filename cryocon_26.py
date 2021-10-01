@@ -6,11 +6,6 @@ class cryocon_26(LANSensor):
     """
     Cryogenic controller
     """
-    accepted_commands = [
-        'setpoint <channel> <value>: change the setpoint for the given channel',
-        'loop stop: shut down both heaters'
-    ]
-
     def set_parameters(self):
         self._msg_end = ';\n'
         self.commands = {  # these are not case sensitive
@@ -28,15 +23,10 @@ class cryocon_26(LANSensor):
             'setSP': 'loop {ch}:setpt {value}',
         }
         self.reading_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
-        self.command_patterns = [
-            (re.compile(rf'setpoint (?P<ch>1|2) (?P<value>{utils.number_regex})'),
-             lambda x: self.commands['setSP'].format(**x.groupdict())),
-        ]
+        self.command_pattern = re.compile(f'set setpoint ({utils.number_regex})')
 
-    def execute_command(self, cmd):
+    def execute_command(self, command):
         """
-        Takes 'set setpoint value' and does something with it
         """
-        if 'setpoint' in cmd:
-            val = float(cmd.split(' ')[2])
-            return self.commands['setSP'].format(ch=1, value=val)
+        if (m := self.command_pattern.match(command)):
+            return self.commands['setSP'].format(ch=1, value=float(m[1]))
