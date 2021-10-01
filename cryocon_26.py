@@ -32,3 +32,11 @@ class cryocon_26(LANSensor):
             (re.compile(rf'setpoint (?P<ch>1|2) (?P<value>{utils.number_regex})'),
              lambda x: self.commands['setSP'].format(**x.groupdict())),
         ]
+
+    def execute_command(self, cmd):
+        """
+        Takes 'set setpoint value' and does something with it
+        """
+        if 'setpoint' in cmd:
+            val = float(cmd.split(' ')[2])
+            return self.commands['setSP'].format(ch=1, value=val)
