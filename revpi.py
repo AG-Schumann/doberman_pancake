@@ -29,7 +29,7 @@ class revpi(Sensor):
         module, output = target
         module = int(f'0x{module}', 16)
         output = int(f'0x{output}', 16)
-        return f'w,{module},o,{output},{value}'
+        return self.commands['writeOutput'].format(module=module, ch=output, value=value)
 
     def send_recv(self, message):
         self.bytes_per_module = 89
