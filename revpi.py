@@ -26,9 +26,11 @@ class revpi(Sensor):
         # need to do it here. We rsplit with max here so "target"
         # can potentially have spaces in it and won't cause issues
         target, value = command[4:].rsplit(' ', maxsplit=1)
-        module, output = target
-        module = int(f'0x{module}', 16)
-        output = int(f'0x{output}', 16)
+        if target == 'fast_cooling_valve':
+            # "fast_cooling_valve open" or something
+            module = 3
+            ch = 13
+            value = 1 if value == 'open' else 0
         return self.commands['writeOutput'].format(module=module, ch=output, value=value)
 
     def send_recv(self, message):
