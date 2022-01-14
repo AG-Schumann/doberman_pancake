@@ -20,6 +20,17 @@ class revpi(Sensor):
              lambda x: self.commands['writeOutput'].format(**x.groupdict())),
         ]
 
+    def execute_command(self, command):
+        # command looks like "set <target> <value>"
+        # this is wrapped in a try-except one call up so we don't
+        # need to do it here. We rsplit with max here so "target"
+        # can potentially have spaces in it and won't cause issues
+        target, value = command[4:].rsplit(' ', maxsplit=1)
+        module, output = target
+        module = int(f'0x{module}', 16)
+        output = int(f'0x{output}', 16)
+        return f'w,{module},o,{output},{value}'
+
     def send_recv(self, message):
         self.bytes_per_module = 89
         self.bytes_per_channel = 2
