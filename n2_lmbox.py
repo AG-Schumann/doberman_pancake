@@ -1,9 +1,9 @@
-from Doberman import SerialSensor
+from Doberman import SerialDevice
 import struct
 import time
 
 
-class n2_lmbox(SerialSensor):
+class n2_lmbox(SerialDevice):
     """
     Custom level meter box for pancake. The device is read out through an RS485 to ETH adapter, that's why
     it inherits from LANSensor. send_recv() is modified to sleep longer since the device reacts slower than

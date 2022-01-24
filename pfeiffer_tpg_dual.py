@@ -1,8 +1,8 @@
-from Doberman import LANSensor, utils
+from Doberman import LANDevice, utils
 import re  # EVERYBODY STAND BACK xkcd.com/208
 
 
-class pfeiffer_tpg_dual(LANSensor):
+class pfeiffer_tpg_dual(LANDevice):
     def set_parameters(self):
         self._msg_begin = ''
         self._msg_end = '\r\n\x05'

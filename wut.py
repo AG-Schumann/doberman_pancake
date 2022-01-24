@@ -1,7 +1,7 @@
-from Doberman import LANSensor, utils
+from Doberman import LANDevice, utils
 import re
 
-class wut(LANSensor):
+class wut(LANDevice):
     """
     W&T Web-Thermometer (57708)
     """

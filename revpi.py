@@ -1,8 +1,8 @@
-from Doberman import Sensor, utils
+from Doberman import Device
 import re
 
 
-class revpi(Sensor):
+class revpi(Device):
     """
     Class for RevolutionPi sensors
     """
