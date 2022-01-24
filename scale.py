@@ -1,7 +1,7 @@
-from Doberman import SerialSensor, utils
+from Doberman import SerialDevice, utils
 import re
 
-class scale(SerialSensor):
+class scale(SerialDevice):
     """
     Large scale. should update to right name for pancake. but now quick implementation for XeBra.
     """

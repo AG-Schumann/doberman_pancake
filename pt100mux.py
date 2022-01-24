@@ -1,9 +1,9 @@
-from Doberman import Sensor
+from Doberman import Device
 import time
 import fcntl
 import struct
 
-class pt100mux(Sensor):
+class pt100mux(Device):
     """
     Plug-in for PT100MUX multiplexer. 
     This works together with a given RevPi and must be executed on this RevPi.

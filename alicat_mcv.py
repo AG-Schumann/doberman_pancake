@@ -1,8 +1,8 @@
-from Doberman import LANSensor, utils
+from Doberman import LANDevice, utils
 import re  # EVERYBODY STAND BACK xkcd.com/208
 
 
-class alicat_mcv(LANSensor):
+class alicat_mcv(LANDevice):
     """
     Alicat MCV flow controller
     """

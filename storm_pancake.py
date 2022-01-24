@@ -1,7 +1,7 @@
-from Doberman import Sensor
+from Doberman import Device
 import re
 
-class storm_pancake(Sensor):
+class storm_pancake(Device):
 
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': message}

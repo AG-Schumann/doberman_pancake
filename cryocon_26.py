@@ -1,8 +1,8 @@
-from Doberman import LANSensor, utils
+from Doberman import LANDevice, utils
 import re  # EVERYBODY STAND BACK xkcd.com/208
 
 
-class cryocon_26(LANSensor):
+class cryocon_26(LANDevice):
     """
     Cryogenic controller
     """

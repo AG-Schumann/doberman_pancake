@@ -1,10 +1,10 @@
-from Doberman import SerialSensor, utils
+from Doberman import SerialDevice, utils
 import re
 
-class upsi_2406dp1_1(SerialSensor):
+class upsi_2406dp1_1(SerialDevice):
  
     """
-    Bicker uninteruptable power supply (UPS)
+    Bicker uninterruptible power supply (UPS)
     """
 
     def set_parameters(self):
