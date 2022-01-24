@@ -20,6 +20,19 @@ class revpi(Sensor):
              lambda x: self.commands['writeOutput'].format(**x.groupdict())),
         ]
 
+    def execute_command(self, command):
+        # command looks like "set <target> <value>"
+        # this is wrapped in a try-except one call up so we don't
+        # need to do it here. We rsplit with max here so "target"
+        # can potentially have spaces in it and won't cause issues
+        target, value = command[4:].rsplit(' ', maxsplit=1)
+        if target == 'fast_cooling_valve':
+            # "fast_cooling_valve open" or something
+            module = 3
+            ch = 13
+            value = 1 if value == 'open' else 0
+        return self.commands['writeOutput'].format(module=module, ch=output, value=value)
+
     def send_recv(self, message):
         self.bytes_per_module = 89
         self.bytes_per_channel = 2
@@ -56,23 +69,9 @@ class revpi(Sensor):
 
     def process_one_reading(self, name, data):
         """
-        Convert from current|voltage to the correct unit: A[unit] = <multiplier> * (A[uA|mV] + <offset>)
+        Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
+        to a later function
         """
-        if float(data) > 60000: # negative values go to ffff=65535. Better way to deal with this?
-            data = 0
-        multiplier = 1
-        offset = 0
-        try:
-            multiplier = self.conversion[name]['multiplier']
-        except Exception as e:
-            self.logger.debug(f'Didn\'t find conversion values for {name} in the DB: {e}. Multiplier set to 1')
-        try:
-            offset = self.conversion[name]['offset']
-        except Exception as e:
-            self.logger.debug(f'Didn\'t find conversion values for {name} in the DB: {e}. Offset set to 0')
-        ret = multiplier * (float(data) + offset)
-        # to get rid of individual faulty temperature measurements (data = 63536)
-        if name.startswith('temp'):
-            if ret > 500:
-                return
-        return ret
+        data = float(data)
+        # skip faulty temperature measurements
+        return None if name[0] == 'T' and data > 63000 else data
