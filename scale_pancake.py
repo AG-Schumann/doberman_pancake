@@ -1,7 +1,7 @@
-from Doberman import LANSensor, utils
+from Doberman import LANDevice
 import re
 
-class scale_pancake(LANSensor):
+class scale_pancake(LANDevice):
     """
     Scale for nitrogen dewar in pancake.
     """
