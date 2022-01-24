@@ -19,16 +19,17 @@ class pt100mux(Sensor):
     def set_parameters(self):
         self.analog_pos = self.find_pos_by_name(self.analog_output)
         self.analog_offset = struct.unpack_from('>H', self.analog_pos, 32)[0] >> 8
-
+    
 
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': []}
         for i in range(8):
             self.switch_channel(i)
-            time.sleep(1.5)  # Let analog channel adjust to new value
-            with open('/dev/piControl0', 'wb+', 0) as f:
+            self.event.wait(1.5)  # Let analog channel adjust to new value
+            with open('/dev/piControl0', 'rb+', 0) as f:
                 f.seek(self.analog_offset)
                 ret['data'].append(int.from_bytes(f.read(2), 'little'))
+        self.logger.debug(f'currents: {ret["data"]}')
         return ret
 
 
@@ -37,7 +38,9 @@ class pt100mux(Sensor):
         Switches the channel of the multiplexer between 0 and 7.
         :param i: channel number
         """
+        self.logger.debug(f'switching to channel {i}')
         bin_str = format(i, '03b')[::-1]  # 0='000', 1='100', 2='010', 3='110', ..., 7='111'
+        self.logger.debug(f' binary string: {bin_str}')
         with open('/dev/piControl0', 'wb+', 0) as f:
             for j in range(3):
                 bit_pos = self.find_pos_by_name(self.digital_inputs[j])

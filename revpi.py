@@ -58,6 +58,8 @@ class revpi(Sensor):
         """
         Convert from current|voltage to the correct unit: A[unit] = <multiplier> * (A[uA|mV] + <offset>)
         """
+        if float(data) > 60000: # negative values go to ffff=65535. Better way to deal with this?
+            data = 0
         multiplier = 1
         offset = 0
         try:
