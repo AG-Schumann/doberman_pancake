@@ -6,11 +6,6 @@ class cryocon_26(LANDevice):
     """
     Cryogenic controller
     """
-    accepted_commands = [
-        'setpoint <channel> <value>: change the setpoint for the given channel',
-        'loop stop: shut down both heaters'
-    ]
-
     def set_parameters(self):
         self._msg_end = ';\n'
         self.commands = {  # these are not case sensitive
@@ -27,8 +22,8 @@ class cryocon_26(LANDevice):
             'setTempBUnits': 'input b:units k',
             'setSP': 'loop {ch}:setpt {value}',
         }
-        self.reading_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
-        self.command_patterns = [
-            (re.compile(rf'setpoint (?P<ch>1|2) (?P<value>{utils.number_regex})'),
-             lambda x: self.commands['setSP'].format(**x.groupdict())),
-        ]
+        self.value_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
+
+    def execute_command(self, quantity, value):
+        if quantity == 'setpoint':
+            return self.commands['setSP'].format(ch=0, value=value)

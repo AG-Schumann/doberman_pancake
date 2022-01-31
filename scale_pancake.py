@@ -7,7 +7,7 @@ class scale_pancake(LANDevice):
     """
 
     def set_parameters(self):
-        self.reading_pattern = re.compile((f'(?P<value>{utils.number_regex})kg').encode())
+        self.value_pattern = re.compile((f'(?P<value>{utils.number_regex})kg').encode())
 
 
 

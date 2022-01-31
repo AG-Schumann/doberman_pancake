@@ -9,7 +9,7 @@ class pfeiffer_tpg_dual(LANDevice):
         self.commands = {
                 'identify' : 'AYT',
                 }
-        self.reading_pattern = re.compile(('(?P<status>[0-9]),(?P<value>%s)' %
+        self.value_pattern = re.compile(('(?P<status>[0-9]),(?P<value>%s)' %
                                                     utils.number_regex).encode())
 
     def setup(self):
