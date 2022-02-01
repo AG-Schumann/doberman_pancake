@@ -1,32 +1,41 @@
 import fcntl
 import struct
+import time
+
 from Doberman import Device
 import re
 
 
 class revpi(Device):
     """
-    Class for RevolutionPi sensors
+    Class for RevolutionPi devices
     """
 
     def set_parameters(self):
         self.commands = {
-            'read': 'r {name}',
             'write': 'w {name} {value}'
         }
-        self.command_patterns = [
-            (re.compile(r'set (?P<name>\w+) (?P<value>\d{1,5})'),
-             lambda x: self.commands['write'].format(**x.groupdict())),
-        ]
         self.positions = {}
-        self.img = open('/dev/piControl0', 'wb+', 0)
         self.targets = {'fast_cooling_valve': 'O_13', }
         self.keywords = {'open': 1, 'close': 0, }
+        # which lines are the muxers connected to? The last in each list is the RTD line,
+        # the others are the digital controls, all with the format '<channel_name>'
+        self.muxer_ctl = [
+            ['', '', ''],
+            ['', '', ''],
+            ['', '', '']
+        ]
+
+    def shutdown(self):
+        self.f.close()
+
+    def setup(self):
+        self.f = open('/dev/piControl0', 'wb+')
 
     def get_position(self, name):
         prm = (b'K'[0] << 8) + 17
         struct_name = struct.pack('37s', name.encode())
-        ret = fcntl.ioctl(self.img, prm, struct_name)
+        ret = fcntl.ioctl(self.f, prm, struct_name)
         return ret
 
     def write(self, name, value):
@@ -47,12 +56,12 @@ class revpi(Device):
                 struct.pack_into('>H', byte_array, 0, offset)
                 struct.pack_into('B', byte_array, 2, bit)
                 struct.pack_into('B', byte_array, 3, value)
-                fcntl.ioctl(self.img, prm, byte_array)
+                fcntl.ioctl(self.f, prm, byte_array)
             else:
                 self.logger.debug(f'Invalid value {value}. choose 0 or 1')
         else:  # writing 2 bytes
-            self.img.seek(int(offset >> 8))
-            self.img.write(int(value).to_bytes(2, 'little'))
+            self.f.seek(int(offset >> 8))
+            self.f.write(int(value).to_bytes(2, 'little'))
 
     def read(self, name):
         """
@@ -69,11 +78,11 @@ class revpi(Device):
             bit = struct.unpack_from('B', self.positions[name], 34)[0]
             struct.pack_into('>H', value, 0, offset)
             struct.pack_into('B', value, 2, bit)
-            fcntl.ioctl(self.img, prm, value)
+            fcntl.ioctl(self.f, prm, value)
             ret = value[3]
         else:  # two bytes
-            self.img.seek(int(offset >> 8))
-            ret = int.from_bytes(self.img.read(2), 'little')
+            self.f.seek(int(offset >> 8))
+            ret = int.from_bytes(self.f.read(2), 'little')
         return ret
 
     def execute_command(self, command):
@@ -89,11 +98,30 @@ class revpi(Device):
                 value = self.keywords[value]
         return self.commands['write'].format(name=target, value=value)
 
+    def read_muxer(self, muxer, ch):
+        """
+        Reading from the custom muxers is a two-step operation
+        """
+        muxer_lines = self.muxer_ctl[muxer]
+        mask = format(ch, f'0{len(muxer_lines)-1}b')[::-1]
+        for do, value in zip(muxer_lines[:-1], mask):
+            self.write(do, int(value))
+        time.sleep(0.001)  # TODO update when we know the actual timing
+        return self.read(muxer_lines[-1])
+
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': None}
-        msg = message.split()  # msg = <r|w> <name> [<value>]
+        msg = message.split()  # msg = <r> <name> [<channel>] | <w> <name> <value>
         if msg[0] == 'r':
-            ret['data'] = self.read(msg[1])
+            if msg[1] in [lines[-1] for lines in self.muxer_ctl]:
+                if len(msg) == 3:
+                    ret['data'] = self.read_muxer(msg[1], int(msg[2]))
+                else:
+                    self.logger.debug(f'Reading out Multiplexer ({msg[1]}) without specified channel. Defaulting to '
+                                      f'channel 0.')
+                    ret['data'] = self.read_muxer(msg[1], 0)
+            else:
+                ret['data'] = self.read(msg[1])
         elif msg[0] == 'w':
             if int(msg[2]) > (1 << 16):
                 pass
@@ -105,21 +133,9 @@ class revpi(Device):
 
     def process_one_reading(self, name, data):
         """
-        Convert from current|voltage to the correct unit: A[unit] = <multiplier> * (A[uA|mV] + <offset>)
+        Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
+        to a later function
         """
-        multiplier = 1
-        offset = 0
-        try:
-            multiplier = self.conversion[name]['multiplier']
-        except Exception as e:
-            self.logger.debug(f'Didn\'t find conversion values for {name} in the DB: {e}. Multiplier set to 1')
-        try:
-            offset = self.conversion[name]['offset']
-        except Exception as e:
-            self.logger.debug(f'Didn\'t find conversion values for {name} in the DB: {e}. Offset set to 0')
-        ret = multiplier * (float(data) + offset)
-        # to get rid of individual faulty temperature measurements (data = 63536)
-        if name.startswith('temp'):
-            if ret > 500:
-                return
-        return ret
+        data = float(data)
+        # skip faulty temperature measurements
+        return None if name[0] == 'T' and data > 63000 else data
