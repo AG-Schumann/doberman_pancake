@@ -7,12 +7,11 @@ class pfeiffer_tpg_dual(LANDevice):
         self._msg_begin = ''
         self._msg_end = '\r\n\x05'
         self.commands = {
-                'identify' : 'AYT',
-                }
+            'identify': 'AYT',
+        }
         self.reading_pattern = re.compile(('(?P<status>[0-9]),(?P<value>%s)' %
-                                                    utils.number_regex).encode())
+                                           utils.number_regex).encode())
 
     def setup(self):
         self.send_recv(self.commands['identify'])
         # stops the continuous flow of data
-

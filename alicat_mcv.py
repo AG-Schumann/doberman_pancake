@@ -10,7 +10,7 @@ class alicat_mcv(LANDevice):
     def set_parameters(self):
         self._msg_end = '\r'
 
-    def process_one_reading(self, name, data):
+    def process_one_value(self, name, data):
         pattern = re.compile(f'{utils.number_regex}'.encode())
         matches = re.findall(pattern, data)
         ret = [float(match) for match in matches][:5]
