@@ -1,5 +1,4 @@
 from Doberman import Device
-import re
 
 class storm_pancake(Device):
 
@@ -7,5 +6,5 @@ class storm_pancake(Device):
         ret = {'retcode': 0, 'data': message}
         return ret
 
-    def process_one_reading(self, name, data):
+    def process_one_value(self, name, data):
         return data

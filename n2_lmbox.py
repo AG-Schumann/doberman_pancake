@@ -14,21 +14,30 @@ class n2_lmbox(LANDevice):
     def set_parameters(self):
         self.eol = b'\r'
         self.split = b'\x06'
+    
+    def setup(self):
 
-    def process_one_reading(self, name, data):
+        self.send_recv('0')
+        time.sleep(1)
+        self.send_recv('1')
+        time.sleep(1)
+
+
+    def process_one_value(self, name, data):
         """
         Data structure: 6 times 4 integers divided by the split character plus the EOL-character.
         """
+        self.logger.debug(f'{data}')
         if self.eol in data:
             data = data.split(self.eol)[0]
         else:
             self.logger.debug('EOL not found')
             return
         if len(data) != 54:
-            self.logger.debug(f'{data}')
+            self.logger.debug(f'data length is {len(data)} not 54')
             data = self.salvage_input(data)
         if len(data) != 54:
-            self.logger.debug(f'salvaging unsuccessful, {data}')
+            self.logger.debug(f'salvaging unsuccessful, length is {len(data)} not 54')
             return
         decoded = struct.unpack('<' + 6 * (4 * 'h' + 'c'), data)
         c_meas = []
@@ -54,10 +63,16 @@ class n2_lmbox(LANDevice):
         data = self.split.join(data_list) + self.split
         return data
 
+        try:
+            ret['data'] = self._device.recv(1024)
+        except socket.error as e:
+            self.logger.fatal(f'Could not receive data from sensor. Error: {e}')
+
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': None}
+
         if not self._connected:
-            self.logger.error(f'No sensor connected, can\'t send message {message}')
+            self.logger.error('No device connected, can\'t send message %s' % message)
             ret['retcode'] = -1
             return ret
         message = str(message).rstrip()
@@ -65,13 +80,13 @@ class n2_lmbox(LANDevice):
         try:
             self._device.sendall(message.encode())
         except socket.error as e:
-            self.logger.fatal(f'Could not send message {message.strip()}. Error: {e}')
+            self.logger.fatal("Could not send message %s. Error: %s" % (message.strip(), e))
             ret['retcode'] = -2
             return ret
-        time.sleep(1)
+        time.sleep(1)  # Giving the device mor time to respond than normal LAN device
         try:
             ret['data'] = self._device.recv(1024)
         except socket.error as e:
-            self.logger.fatal(f'Could not receive data from sensor. Error: {e}')
+            self.logger.fatal('Could not receive data from device. Error: %s' % e)
             ret['retcode'] = -2
         return ret

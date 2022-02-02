@@ -1,9 +1,8 @@
 import fcntl
 import struct
 import time
-
 from Doberman import Device
-import re
+
 
 
 class revpi(Device):
