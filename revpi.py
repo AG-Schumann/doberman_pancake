@@ -85,17 +85,10 @@ class revpi(Device):
             ret = int.from_bytes(self.f.read(2), 'little')
         return ret
 
-    def execute_command(self, command):
-        # command looks like "set <target> <value>"
-        # this is wrapped in a try-except one call up so we don't
-        # need to do it here. We rsplit with max here so "target"
-        # can potentially have spaces in it and won't cause issues
-        target, value = command[4:].rsplit(' ', maxsplit=1)
-        if target in self.targets:
-            # "fast_cooling_valve open" or something
-            target = self.targets[target]
-            if value in self.keywords:
-                value = self.keywords[value]
+    def execute_command(self, target, value):
+
+        target = self.targets.get(target, target)
+        value = self.keywords.get(value, value)
         return self.commands['write'].format(name=target, value=value)
 
     def read_muxer(self, muxer, ch):
@@ -131,7 +124,7 @@ class revpi(Device):
             ret['retcode'] = -1
         return ret
 
-    def process_one_reading(self, name, data):
+    def process_one_value(self, name, data):
         """
         Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
         to a later function
