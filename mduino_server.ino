@@ -196,17 +196,18 @@ IPAddress gateway(192, 168, 131, 1);
 IPAddress netmask(255, 255, 255, 0);
 const int eth_port = 10001;
 
-const int MIN_MESSAGE_LENGTH = strlen("*RI0.12\r\n");
+const int MIN_MESSAGE_LENGTH = strlen("*RI0.1\r\n");
 const int MAX_MESSAGE_LENGTH = strlen("*WI0.12 FF\r\n");
 
 EthernetServer server(eth_port);
 char packet[MAX_MESSAGE_LENGTH];
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   Ethernet.begin(mac, ip, nameServer, gateway, netmask);
   server.begin();
-  Serial.println(Ethernet.localIP());
+  //Serial.println("Got IP:");
+  //Serial.println(Ethernet.localIP());
   // set pins in various zones to correct mode
   // relay
   for (int i = 0; i < 9; i++) if (relay[i] != NC) pinMode(relay[i], OUTPUT);
@@ -227,16 +228,20 @@ void setup() {
 void loop() {
   EthernetClient client = server.available();
   if (client) {
-    Serial.println("Got client");
+    //Serial.println("Got client");
     int j = 0;
-    while (client.connected()) {
-      if (client.available() && j < MAX_MESSAGE_LENGTH)
-        packet[j++] = client.read();
+    //int cmd_start = millis();
+    while (client.available() && j < MAX_MESSAGE_LENGTH) {
+      packet[j++] = client.read();
+      //Serial.println("Read char");
+      if (packet[j-1] == '\n')
+        break;
     }
-    int numbytes = strlen(packet);
-    if (MIN_MESSAGE_LENGTH <= numbytes && numbytes <= MAX_MESSAGE_LENGTH && packet[0] == '*') {
-      Serial.println("Recieved packet");
-      Serial.println(packet);
+    //Serial.println(millis()-cmd_start);
+    //Serial.println("Recieved packet");
+    //Serial.println(packet);
+    //Serial.println(j);
+    if (MIN_MESSAGE_LENGTH <= j && j <= MAX_MESSAGE_LENGTH && packet[0] == '*') {
 
       // 0123456
       // *RI0.4\r\n
@@ -244,7 +249,6 @@ void loop() {
       // *WR2.6 1\r\n
       // *WQ0.12 FF\r\n
       // 0123456789A
-      int8_t shift = 0;
       uint8_t action = packet[1];
       uint8_t type = packet[2];
       uint8_t zone = packet[3] - '0';
@@ -253,15 +257,14 @@ void loop() {
       if (packet[6] == '\r' || packet[6] == ' ') {
         // one digit channel
         channel = packet[5] - '0';
-        shift = 0;
       } else {
         // two-digit channel
         channel = 10 * (packet[5]-'0') + (packet[6] - '0');
-        shift = 1;
       }
-
+      //Serial.println(millis()-cmd_start);
       int value = 0;
       if (action == 'R') {
+        //Serial.println("Read");
         switch(type){
           case 'A': value = analogRead(analog_out[zone][channel]); break;
           case 'I': value = analogRead(analog_in[zone][channel]); break;
@@ -271,6 +274,7 @@ void loop() {
           default: value=0xFFFF; break;
         }
       } else if (action == 'W') {
+        int8_t shift = channel/10;
         if (packet[8+shift] == '\r')
           value = packet[7+shift] - '0';
         else
@@ -284,10 +288,13 @@ void loop() {
       } else {
         // fail
       }
+      //Serial.println(millis()-cmd_start);
       char retdata[16];
       sprintf(retdata, "*OK;%d\r\n", value);
+      //Serial.println(millis()-cmd_start);
       client.print(retdata);
-      client.stop();
+      //Serial.println(millis()-cmd_start);
     } // if packet is good
+    client.stop();
   } // if client
 }
