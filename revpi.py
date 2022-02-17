@@ -130,4 +130,3 @@ class revpi(Device):
         data = float(data)
         # skip faulty temperature measurements
         return None if name[0] == 'T' and data > 63000 else data
-
