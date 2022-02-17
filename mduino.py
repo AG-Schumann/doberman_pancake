@@ -26,4 +26,3 @@ class mduino(Doberman.CheapSocketDevice):
         # quantity looks like 'R2.8' or 'Q0.7' or something
         value = max(min(value, 0xFF), 0)
         return f'W{quantity} {value}'
-
