@@ -7,4 +7,4 @@ class wut(LANDevice):
     """
     def set_parameters(self):
         self._msg_start = 'GET /Single'
-        self.reading_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
+        self.value_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())

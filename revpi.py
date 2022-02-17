@@ -4,7 +4,6 @@ import time
 from Doberman import Device
 
 
-
 class revpi(Device):
     """
     Class for RevolutionPi devices
