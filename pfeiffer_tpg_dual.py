@@ -15,4 +15,3 @@ class pfeiffer_tpg_dual(LANDevice):
     def setup(self):
         self.send_recv(self.commands['identify'])
         # stops the continuous flow of data
-

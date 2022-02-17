@@ -1,4 +1,4 @@
-from Doberman import LANDevice
+from Doberman import LANDevice, utils
 import re
 
 class scale_pancake(LANDevice):

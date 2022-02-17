@@ -79,7 +79,7 @@ class pt100mux(Device):
             fcntl.ioctl(f, prm, value)
 
 
-    def process_one_reading(self, name, data):
+    def process_one_value(self, name, data):
         """
         Convert current measurement [4000-20000]uA to temperature [-200,300]degC.
         Values below 4000uA are set to -1000dC
