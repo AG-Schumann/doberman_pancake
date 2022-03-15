@@ -1,6 +1,6 @@
 from Doberman import Device, utils
 import requests
-
+import re
 
 class fsp_clippers(Device):
 
@@ -21,3 +21,6 @@ class fsp_clippers(Device):
         for key in self.keys:
             ret['data'].append(float(data[key]))
         return ret
+
+    def process_one_value(self, name, data):
+        return data

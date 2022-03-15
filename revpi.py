@@ -19,7 +19,7 @@ class revpi(Device):
         # which lines are the muxers connected to? The last in each list is the RTD line,
         # the others are the digital controls, all with the format '<channel_name>'
         self.muxer_ctl = [
-            ['', '', ''],
+        
             ['', '', ''],
             ['', '', '']
         ]
@@ -28,7 +28,7 @@ class revpi(Device):
         self.f.close()
 
     def setup(self):
-        self.f = open('/dev/piControl0', 'wb+')
+        self.f = open('/dev/piControl0', 'wb+', 0)
 
     def get_position(self, name):
         prm = (b'K'[0] << 8) + 17
@@ -45,18 +45,15 @@ class revpi(Device):
         if name not in self.positions:
             self.positions[name] = self.get_position(name)
         offset = struct.unpack_from('>H', self.positions[name], 32)[0]
-        length = struct.unpack_from('>H', self.positions[name], 35)[0]
+        length = struct.unpack_from('B', self.positions[name], 36)[0]
         prm = (b'K'[0] << 8) + 16
         byte_array = bytearray([0, 0, 0, 0])
         if length == 1:  # single bit
-            if value in [0, 1]:
-                bit = struct.unpack_from('B', self.positions[name], 34)[0]
-                struct.pack_into('>H', byte_array, 0, offset)
-                struct.pack_into('B', byte_array, 2, bit)
-                struct.pack_into('B', byte_array, 3, value)
-                fcntl.ioctl(self.f, prm, byte_array)
-            else:
-                self.logger.debug(f'Invalid value {value}. choose 0 or 1')
+            bit = struct.unpack_from('B', self.positions[name], 34)[0]
+            struct.pack_into('>H', byte_array, 0, offset)
+            struct.pack_into('B', byte_array, 2, bit)
+            struct.pack_into('B', byte_array, 3, int(value))
+            fcntl.ioctl(self.f, prm, byte_array)
         else:  # writing 2 bytes
             self.f.seek(int(offset >> 8))
             self.f.write(int(value).to_bytes(2, 'little'))
@@ -70,7 +67,7 @@ class revpi(Device):
             self.positions[name] = self.get_position(name)
         value = bytearray([0, 0, 0, 0])
         offset = struct.unpack_from('>H', self.positions[name], 32)[0]
-        length = struct.unpack_from('>H', self.positions[name], 35)[0]
+        length = struct.unpack_from('B', self.positions[name], 36)[0]
         prm = (b'K'[0] << 8) + 15
         if length == 1:  # single bit
             bit = struct.unpack_from('B', self.positions[name], 34)[0]
@@ -79,8 +76,9 @@ class revpi(Device):
             fcntl.ioctl(self.f, prm, value)
             ret = value[3]
         else:  # two bytes
-            self.f.seek(int(offset >> 8))
-            ret = int.from_bytes(self.f.read(2), 'little')
+            with open('/dev/piControl0', 'rb+') as f:
+                f.seek(int(offset >> 8))
+                ret = int.from_bytes(f.read(2), 'little')
         return ret
 
     def execute_command(self, target, value):
@@ -93,7 +91,7 @@ class revpi(Device):
         """
         Reading from the custom muxers is a two-step operation
         """
-        muxer_lines = self.muxer_ctl[muxer]
+        muxer_lines = self.muxer_ctl[int(muxer)]
         mask = format(ch, f'0{len(muxer_lines)-1}b')[::-1]
         for do, value in zip(muxer_lines[:-1], mask):
             self.write(do, int(value))
@@ -104,9 +102,10 @@ class revpi(Device):
         ret = {'retcode': 0, 'data': None}
         msg = message.split()  # msg = <r> <name> [<channel>] | <w> <name> <value>
         if msg[0] == 'r':
-            if msg[1] in [lines[-1] for lines in self.muxer_ctl]:
+            muxer_rtds = [lines[-1] for lines in self.muxer_ctl]
+            if msg[1] in muxer_rtds:
                 if len(msg) == 3:
-                    ret['data'] = self.read_muxer(msg[1], int(msg[2]))
+                    ret['data'] = self.read_muxer(muxer_rtds.index(msg[1]), int(msg[2]))
                 else:
                     self.logger.debug(f'Reading out Multiplexer ({msg[1]}) without specified channel. Defaulting to '
                                       f'channel 0.')
@@ -127,6 +126,6 @@ class revpi(Device):
         Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
         to a later function
         """
-        data = float(data)
+        data = int(data)
         # skip faulty temperature measurements
         return None if name[0] == 'T' and data > 63000 else data
