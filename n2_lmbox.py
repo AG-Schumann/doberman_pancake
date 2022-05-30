@@ -46,7 +46,7 @@ class n2_lmbox(SerialDevice):
             index = (index_min + 2) % 4 if lm_values[(index_min + 1) % 4] in offset_values else (index_min + 1) % 4
             n_ref = lm_values[index]
             n_x = lm_values[(index + 1) % 4]
-            c_meas.append(self.c_ref[i] * (n_x - n_off) / (n_ref - n_off))
+            c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
         return c_meas
 
     def salvage_input(self, data):
