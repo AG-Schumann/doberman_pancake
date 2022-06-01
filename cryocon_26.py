@@ -26,4 +26,4 @@ class cryocon_26(LANDevice):
 
     def execute_command(self, quantity, value):
         if quantity == 'setpoint':
-            return self.commands['setSP'].format(ch=0, value=value)
+            return self.commands['setSP'].format(ch=1, value=value)

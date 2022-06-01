@@ -4,7 +4,7 @@ import time
 import socket
 
 
-class n2_lmbox(LANDevice):
+class n2_lmbox_lan(LANDevice):
     """
     Custom level meter box for pancake. The device is read out through an RS485 to ETH adapter, that's why
     it inherits from LANSensor. send_recv() is modified to sleep longer since the device reacts slower than
@@ -12,32 +12,33 @@ class n2_lmbox(LANDevice):
     """
 
     def set_parameters(self):
-        self.eol = b'\r'
+        self.eol = 13
         self.split = b'\x06'
-    
-    def setup(self):
-
-        self.send_recv('0')
-        time.sleep(1)
-        self.send_recv('1')
-        time.sleep(1)
-
+        self.success_counter = 0
+        self.salvage_counter = 0
+        self.fail_counter = 0
 
     def process_one_value(self, name, data):
         """
         Data structure: 6 times 4 integers divided by the split character plus the EOL-character.
         """
-        self.logger.debug(f'{data}')
-        if self.eol in data:
-            data = data.split(self.eol)[0]
+        if data[-1] == self.eol:
+            data = data[:-1]
+            if len(data) != 54:
+                self.logger.info(f'data legth is {len(data)} not 54. Trying to salvage...')
+                self.logger.debug(data)
+                data = self.salvage_input(data)
+                if len(data) != 54:
+                    self.logger.info(f'salvaging unsuccessful, length is {len(data)} not 54')
+                    self.fail_counter += 1
+                    return
+                else:
+                    self.salvage_counter += 1
+                    self.logger.debug('salvaging successful')
         else:
-            self.logger.debug('EOL not found')
-            return
-        if len(data) != 54:
-            self.logger.debug(f'data length is {len(data)} not 54')
-            data = self.salvage_input(data)
-        if len(data) != 54:
-            self.logger.debug(f'salvaging unsuccessful, length is {len(data)} not 54')
+            self.logger.debug('data does not end with EOL')
+            self.logger.debug(data)
+            self.fail_counter += 1
             return
         decoded = struct.unpack('<' + 6 * (4 * 'h' + 'c'), data)
         c_meas = []
@@ -50,7 +51,10 @@ class n2_lmbox(LANDevice):
             n_ref = lm_values[index]
             n_x = lm_values[(index + 1) % 4]
             c_meas.append(self.c_ref[i] * (n_x - n_off) / (n_ref - n_off))
+        self.success_counter += 1
+        self.logger.debug(f'success: {self.success_counter-self.salvage_counter}, salvaged: {self.salvage_counter}, failed: {self.fail_counter}')
         return c_meas
+
 
     def salvage_input(self, data):
         """
@@ -63,10 +67,6 @@ class n2_lmbox(LANDevice):
         data = self.split.join(data_list) + self.split
         return data
 
-        try:
-            ret['data'] = self._device.recv(1024)
-        except socket.error as e:
-            self.logger.fatal(f'Could not receive data from sensor. Error: {e}')
 
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': None}
@@ -83,7 +83,7 @@ class n2_lmbox(LANDevice):
             self.logger.fatal("Could not send message %s. Error: %s" % (message.strip(), e))
             ret['retcode'] = -2
             return ret
-        time.sleep(1)  # Giving the device mor time to respond than normal LAN device
+        time.sleep(1) # Giving the device more time to respond than normal LAN device
         try:
             ret['data'] = self._device.recv(1024)
         except socket.error as e:
