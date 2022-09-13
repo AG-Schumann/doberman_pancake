@@ -14,9 +14,6 @@ class n2_lmbox_lan(LANDevice):
     def set_parameters(self):
         self.eol = 13
         self.split = b'\x06'
-        self.success_counter = 0
-        self.salvage_counter = 0
-        self.fail_counter = 0
 
     def process_one_value(self, name, data):
         """
@@ -26,19 +23,14 @@ class n2_lmbox_lan(LANDevice):
             data = data[:-1]
             if len(data) != 54:
                 self.logger.info(f'data legth is {len(data)} not 54. Trying to salvage...')
-                self.logger.debug(data)
                 data = self.salvage_input(data)
                 if len(data) != 54:
                     self.logger.info(f'salvaging unsuccessful, length is {len(data)} not 54')
-                    self.fail_counter += 1
                     return
                 else:
-                    self.salvage_counter += 1
                     self.logger.debug('salvaging successful')
         else:
-            self.logger.debug('data does not end with EOL')
-            self.logger.debug(data)
-            self.fail_counter += 1
+            self.logger.info('data does not end with EOL')
             return
         decoded = struct.unpack('<' + 6 * (4 * 'h' + 'c'), data)
         c_meas = []
@@ -50,16 +42,13 @@ class n2_lmbox_lan(LANDevice):
             index = (index_min + 2) % 4 if lm_values[(index_min + 1) % 4] in offset_values else (index_min + 1) % 4
             n_ref = lm_values[index]
             n_x = lm_values[(index + 1) % 4]
-            c_meas.append(self.c_ref[i] * (n_x - n_off) / (n_ref - n_off))
-        self.success_counter += 1
-        self.logger.debug(f'success: {self.success_counter-self.salvage_counter}, salvaged: {self.salvage_counter}, failed: {self.fail_counter}')
+            c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
         return c_meas
 
 
     def salvage_input(self, data):
         """
-        This may or may not salvage some reading if the length of the data doesn't fit the normal 
-        structure.
+        If a fraction of the six measurements is faulty, this makes sure the correct vones are salvaged.
         """
         place_holder = b'\x02\x00\x02\x00\x05\x00\x03\x00'
         data_temp = data.split(self.split)[:-1]

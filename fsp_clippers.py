@@ -1,4 +1,4 @@
-from Doberman import Device, utils
+from Doberman import Device
 import requests
 import re
 
@@ -17,7 +17,7 @@ class fsp_clippers(Device):
 
     def send_recv(self, message):
         ret = {'retcode': 0, 'data': []}
-        data = requests.get(url=self.url).json()['workInfo']
+        data = requests.get(url=self.params['url']).json()['workInfo']
         for key in self.keys:
             ret['data'].append(float(data[key]))
         return ret
