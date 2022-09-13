@@ -1,7 +1,7 @@
 from Doberman import LANDevice, utils
 import re
 
-class scale_pancake(LANDevice):
+class scale(LANDevice):
     """
     Scale for nitrogen dewar in pancake.
     """

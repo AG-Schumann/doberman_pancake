@@ -12,6 +12,3 @@ class pfeiffer_tpg_dual(LANDevice):
         self.value_pattern = re.compile(('(?P<status>[0-9]),(?P<value>%s)' %
                                                     utils.number_regex).encode())
 
-    def setup(self):
-        self.send_recv(self.commands['identify'])
-        # stops the continuous flow of data
