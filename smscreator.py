@@ -46,7 +46,7 @@ class smscreator(HTTPDevice):
             'credits': {
                 'type': 'post',
                 'url': 'http://www.smscreator.de/gateway/Information.asmx/QueryAccountBalance',
-                'data': self.postparameters
+                'data': self.params['postparameters']
             }
         }
         self.value_pattern = re.compile(f'<Value>(?P<value>{utils.number_regex})</Value>')

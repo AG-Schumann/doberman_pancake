@@ -47,8 +47,8 @@ class twilio(HTTPDevice):
         self.commands = {
             'credits': {
                 'type': 'get',
-                'url': f'https://api.twilio.com/2010-04-01/Accounts/{self.account}/Balance.json',
-                'auth': self.auth
+                'url': f'https://api.twilio.com/2010-04-01/Accounts/{self.params["account"]}/Balance.json',
+                'auth': self.params['auth']
             }
         }
         self.value_pattern = re.compile(f'"balance": "(?P<value>{utils.number_regex})"')
