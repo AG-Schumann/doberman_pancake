@@ -30,19 +30,28 @@ class n2_lmbox_lan(LANDevice):
                 else:
                     self.logger.debug('salvaging successful')
         else:
-            self.logger.info('data does not end with EOL')
+            self.logger.info(f'data does not end with EOL but with {data[-1]}')
             return
         decoded = struct.unpack('<' + 6 * (4 * 'h' + 'c'), data)
         c_meas = []
         for i in range(6):
-            lm_values = decoded[5 * i:5 * i + 4]
-            offset_values = sorted(lm_values)[:2]
-            n_off = sum(offset_values)
-            index_min = lm_values.index(min(offset_values))
-            index = (index_min + 2) % 4 if lm_values[(index_min + 1) % 4] in offset_values else (index_min + 1) % 4
-            n_ref = lm_values[index]
-            n_x = lm_values[(index + 1) % 4]
-            c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
+            try:
+                lm_values = decoded[5 * i:5 * i + 4]
+                offset_values = sorted(lm_values)[:2]
+                n_off = sum(offset_values)
+                index_min = lm_values.index(min(offset_values))
+                index = (index_min + 2) % 4 if lm_values[(index_min + 1) % 4] in offset_values else (index_min + 1) % 4
+                n_ref = lm_values[index]
+                n_x = lm_values[(index + 1) % 4]
+                # Avoid divide by zero errors
+                if n_ref == n_off:
+                    c_meas.append(None)
+                else:
+                    #self.logger.debug(f'Cap {i}, x {n_x} ref {n_ref}, n_off {n_off}')
+                    c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
+            except Exception as e:
+                self.logger.warning(f'Problem interpreting capacitance value {i}')
+                c_meas.append(None)
         return c_meas
 
 
@@ -72,9 +81,10 @@ class n2_lmbox_lan(LANDevice):
             self.logger.fatal("Could not send message %s. Error: %s" % (message.strip(), e))
             ret['retcode'] = -2
             return ret
-        time.sleep(1) # Giving the device more time to respond than normal LAN device
+        time.sleep(2) # Giving the device more time to respond than normal LAN device
         try:
             ret['data'] = self._device.recv(1024)
+            self.logger.debug(f'data: {ret["data"]}')
         except socket.error as e:
             self.logger.fatal('Could not receive data from device. Error: %s' % e)
             ret['retcode'] = -2
