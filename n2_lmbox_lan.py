@@ -14,6 +14,7 @@ class n2_lmbox_lan(LANDevice):
     def set_parameters(self):
         self.eol = 13
         self.split = b'\x06'
+        self.msg_sleep = 2
 
     def process_one_value(self, name, data):
         """
@@ -45,26 +46,3 @@ class n2_lmbox_lan(LANDevice):
                 c_meas.append(None)
         return c_meas
 
-    def send_recv(self, message):
-        ret = {'retcode': 0, 'data': None}
-
-        if not self._connected:
-            self.logger.error('No device connected, can\'t send message %s' % message)
-            ret['retcode'] = -1
-            return ret
-        message = str(message).rstrip()
-        message = self._msg_start + message + self._msg_end
-        try:
-            self._device.sendall(message.encode())
-        except socket.error as e:
-            self.logger.fatal("Could not send message %s. Error: %s" % (message.strip(), e))
-            ret['retcode'] = -2
-            return ret
-        time.sleep(2) # Giving the device more time to respond than normal LAN device
-        try:
-            ret['data'] = self._device.recv(1024)
-            self.logger.debug(f'data: {ret["data"]}')
-        except socket.error as e:
-            self.logger.fatal('Could not receive data from device. Error: %s' % e)
-            ret['retcode'] = -2
-        return ret
