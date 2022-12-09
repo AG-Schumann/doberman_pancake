@@ -23,6 +23,9 @@ class n2_lmbox_lan(LANDevice):
         if data[-1] != self.eol:
             self.logger.info(f'Data does not end with EOL but with {data[-1]}')
         data = data.split(self.split)[:-1] # Remove EOL
+        if len(data) != 6:
+            self.logger.debug(f'Data contains {len(data)} readings, not 6')
+            return None
 
         c_meas = []
         for i, readingdata in enumerate(data):
@@ -42,7 +45,7 @@ class n2_lmbox_lan(LANDevice):
 
                 c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
             except Exception as e:
-                self.logger.warning(f'Problem interpreting capacitance value {i}, {e}')
+                self.logger.debug(f'Problem interpreting capacitance value {i}, {e}')
                 c_meas.append(None)
         return c_meas
 
