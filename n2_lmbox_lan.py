@@ -11,18 +11,24 @@ class n2_lmbox_lan(LANDevice):
     a standard LAN sensor.
     """
 
-    def set_parameters(self):
-        self.eol = 13
-        self.split = b'\x06'
-        self.msg_sleep = 2
+    msg_wait = 2
+    eol = b'\r'
+    split = b'\x06'
 
     def process_one_value(self, name, data):
         """
         Data structure: 6 times 4 integers divided by the split character plus the EOL-character.
         """
-        if data[-1] != self.eol:
+        with open('/global/logs/pancake/special/lmtest.bin', 'ab') as f:
+            f.write(data + b'\n')
+        if not data.endswith(self.eol):
             self.logger.info(f'Data does not end with EOL but with {data[-1]}')
-        data = data.split(self.split)[:-1] # Remove EOL
+        if len(data) == 55:
+            # If it is the right length, split by position since reading might contain \x06
+            data = [data[i:i+8] for i in range(0,54,9)]
+        else:
+            # Otherwise split by splitting character
+            data = data.split(self.split)[:-1] # Remove EOL
         if len(data) != 6:
             self.logger.debug(f'Data contains {len(data)} readings, not 6')
             return None
