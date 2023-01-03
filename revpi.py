@@ -78,7 +78,7 @@ class revpi(Device):
         else:  # two bytes
             with open('/dev/piControl0', 'rb+') as f:
                 f.seek(int(offset >> 8))
-                ret = int.from_bytes(f.read(2), 'little')
+                ret = int.from_bytes(f.read(2), 'little', signed=True)
         return ret
 
     def execute_command(self, target, value):
@@ -126,6 +126,7 @@ class revpi(Device):
         Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
         to a later function
         """
-        data = int(data)
+        return data # Not sure which faulty readings we are meant to drop, but certainly not all negative ones!
+        data = int(data) # Add a signed=True before wildly uncommenting!
         # skip faulty temperature measurements
         return None if name[0] == 'T' and data > 63000 else data
