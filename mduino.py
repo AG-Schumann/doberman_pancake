@@ -5,6 +5,7 @@ class mduino(Doberman.CheapSocketDevice):
     """
     IndustrialShield mduino. Use in conjunction with the .ino code
     """
+    eol = b'\n'
     def set_parameters(self):
         self._msg_start = '*'
         self._msg_end = '\r\n'
