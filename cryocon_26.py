@@ -6,7 +6,7 @@ class cryocon_26(LANDevice):
     """
     Cryogenic controller
     """
-    eol = b'\n';
+    eol = b'\n'
     _msg_end = ';\n'
     commands = {  # these are not case sensitive
         'identify': '*idn?',
