@@ -4,7 +4,6 @@ import re  # EVERYBODY STAND BACK xkcd.com/208
 
 class pfeiffer_tpg_dual(LANDevice):
     eol = b'\n'
-    _msg_begin = ''
     _msg_end = '\r\n\x05'
     commands = {
         'identify' : 'AYT',
