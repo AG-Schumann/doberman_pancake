@@ -123,10 +123,6 @@ class revpi(Device):
 
     def process_one_value(self, name, data):
         """
-        Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
-        to a later function
+        Do nothing. Leaves conversion to sensible units to later.
         """
-        return data # Not sure which faulty readings we are meant to drop, but certainly not all negative ones!
-        data = int(data) # Add a signed=True before wildly uncommenting!
-        # skip faulty temperature measurements
-        return None if name[0] == 'T' and data > 63000 else data
+        return data
