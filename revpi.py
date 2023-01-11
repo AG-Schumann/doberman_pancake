@@ -44,18 +44,18 @@ class revpi(Device):
         """
         if name not in self.positions:
             self.positions[name] = self.get_position(name)
-        offset = struct.unpack_from('>H', self.positions[name], 32)[0]
+        offset = struct.unpack_from('<H', self.positions[name], 32)[0]
         length = struct.unpack_from('B', self.positions[name], 36)[0]
         prm = (b'K'[0] << 8) + 16
         byte_array = bytearray([0, 0, 0, 0])
         if length == 1:  # single bit
             bit = struct.unpack_from('B', self.positions[name], 34)[0]
-            struct.pack_into('>H', byte_array, 0, offset)
+            struct.pack_into('<H', byte_array, 0, offset)
             struct.pack_into('B', byte_array, 2, bit)
             struct.pack_into('B', byte_array, 3, int(value))
             fcntl.ioctl(self.f, prm, byte_array)
         else:  # writing 2 bytes
-            self.f.seek(int(offset >> 8))
+            self.f.seek(offset)
             self.f.write(int(value).to_bytes(2, 'little'))
 
     def read(self, name):
@@ -65,20 +65,23 @@ class revpi(Device):
         """
         if name not in self.positions:
             self.positions[name] = self.get_position(name)
+      
+       
         value = bytearray([0, 0, 0, 0])
-        offset = struct.unpack_from('>H', self.positions[name], 32)[0]
+        offset = struct.unpack_from('<H', self.positions[name], 32)[0]
         length = struct.unpack_from('B', self.positions[name], 36)[0]
         prm = (b'K'[0] << 8) + 15
         if length == 1:  # single bit
             bit = struct.unpack_from('B', self.positions[name], 34)[0]
-            struct.pack_into('>H', value, 0, offset)
+            struct.pack_into('<H', value, 0, offset)
             struct.pack_into('B', value, 2, bit)
             fcntl.ioctl(self.f, prm, value)
             ret = value[3]
         else:  # two bytes
             with open('/dev/piControl0', 'rb+') as f:
-                f.seek(int(offset >> 8))
-                ret = int.from_bytes(f.read(2), 'little')
+                f.seek(offset)
+                ret = int.from_bytes(f.read(2), 'little', signed=True)
+        self.logger.debug(f'{name}: {ret}')
         return ret
 
     def execute_command(self, target, value):
@@ -123,9 +126,6 @@ class revpi(Device):
 
     def process_one_value(self, name, data):
         """
-        Drops faulty temperature measurements, otherwise leaves the conversion from DAC units to something sensible
-        to a later function
+        Do nothing. Leaves conversion to sensible units to later.
         """
-        data = int(data)
-        # skip faulty temperature measurements
-        return None if name[0] == 'T' and data > 63000 else data
+        return data
