@@ -3,7 +3,6 @@ import struct
 import time
 import socket
 
-
 class n2_lmbox_lan(LANDevice):
     """
     Custom level meter box for pancake. The device is read out through an RS485 to ETH adapter, that's why
@@ -14,13 +13,13 @@ class n2_lmbox_lan(LANDevice):
     msg_wait = 2
     eol = b'\r'
     split = b'\x06'
+    last_readings = [0]*6
 
     def process_one_value(self, name, data):
         """
         Data structure: 6 times 4 integers divided by the split character plus the EOL-character.
         """
-        with open('/global/logs/pancake/special/lmtest.bin', 'ab') as f:
-            f.write(data + b'\n')
+        rawdata = data
         if not data.endswith(self.eol):
             self.logger.info(f'Data does not end with EOL but with {data[-1]}')
         if len(data) == 55:
@@ -34,6 +33,7 @@ class n2_lmbox_lan(LANDevice):
             return None
 
         c_meas = []
+        onebad = False
         for i, readingdata in enumerate(data):
             try:
                 lm_values = struct.unpack('<hhhh', readingdata) # Each packet is four shorts
@@ -48,8 +48,12 @@ class n2_lmbox_lan(LANDevice):
                 n_x = lm_values[(index + 1) % 4]
 
                 c_meas.append(self.params['c_ref'][i] * (n_x - n_off) / (n_ref - n_off))
+                if abs(c_meas[i] - self.last_readings[i]) > 10:
+                    onebad = True
             except Exception as e:
                 self.logger.debug(f'Problem interpreting capacitance value {i}, {e}')
                 c_meas.append(None)
+        if onebad:
+            self.logger.debug(f"Suspicious reading. Values {c_meas}. Raw {rawdata}")
         return c_meas
 

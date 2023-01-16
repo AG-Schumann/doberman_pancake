@@ -17,7 +17,7 @@ class pt100mux(Device):
     """
     
     def set_parameters(self):
-        self.analog_pos = self.find_pos_by_name(self.analog_output)
+        self.analog_pos = self.find_pos_by_name(self.params['analog_output'])
         self.analog_offset = struct.unpack_from('>H', self.analog_pos, 32)[0] >> 8
     
 
@@ -43,7 +43,7 @@ class pt100mux(Device):
         self.logger.debug(f' binary string: {bin_str}')
         with open('/dev/piControl0', 'wb+', 0) as f:
             for j in range(3):
-                bit_pos = self.find_pos_by_name(self.digital_inputs[j])
+                bit_pos = self.find_pos_by_name(self.params['digital_inputs'][j])
                 self.write_bit(bit_pos, int(bin_str[j]))
 
 
