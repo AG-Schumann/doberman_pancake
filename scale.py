@@ -37,7 +37,7 @@ class scale(LANDevice):
                     continue
                 if data.endswith(self.eol):
                     break
-            ret['data'] = data
+            ret['data'] = re.sub('\s','',data)
             self.logger.debug('Unprocessed data : %s' % data)
         except socket.error as e:
             self.logger.fatal('Could not receive data from device. Error: %s' % e)
