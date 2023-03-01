@@ -1,8 +1,5 @@
 from Doberman import LANDevice, utils
 import re
-import socket
-import time
-import threading
 
 class scale(LANDevice):
     """
