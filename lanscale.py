@@ -40,7 +40,6 @@ class lanscale(LANDevice):
         pass
 
     def execute_command(self, quantity, value):
-        #return quantity
         if quantity.startswith('0001R'):
             # Allow direct command input only for read commands
             return quantity
