@@ -29,15 +29,12 @@ class HTTPDevice(Device):
             requests_function = requests.get
         else:
              raise ValueError(f"Unsupported request type {command['type']}")
-        self.logger.debug(f"Url: {url}")
-        self.logger.debug(f"Data: {data}")
         response = requests_function(url=url, data=data, auth=auth)
         ret['data'] = response.content.decode()
         return ret
 
 class weather(HTTPDevice):
     def set_parameters(self):
-        self.logger.debug("Setting parameters")
         self.commands = {
             'weather': {
                 'type': 'get',
