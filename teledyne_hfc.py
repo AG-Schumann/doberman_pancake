@@ -14,7 +14,6 @@ class teledyne_hfc(LANDevice):
     value_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
 
     def execute_command(self, quantity, value):
-        self.logger.debug(f'Q {quantity} and v {value}')
         if quantity == 'setpoint':
             return self.commands['set_setpoint'].format(value=value)
         elif quantity == 'valvemode':
