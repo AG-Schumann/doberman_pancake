@@ -3,7 +3,8 @@ import re
 
 class teledyne_hfc(LANDevice):
     """
-    Scale for nitrogen dewar in pancake.
+    Teledyne mass flow controller.
+    For digital 300B series flow controllers.
     """
     eol = b'\r>'
     _msg_end = '\r'
