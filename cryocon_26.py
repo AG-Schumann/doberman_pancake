@@ -24,11 +24,16 @@ class cryocon_26(LANDevice):
     }
     value_pattern = re.compile(f'(?P<value>{utils.number_regex})'.encode())
 
-    def process_one_value(self, data):
-        data = data.replace('OFF', '0')
-        data = data.replace('ON', '1')
+    def process_one_value(self, name, data):
+        data = data.replace(b'OFF', b'0')
+        data = data.replace(b'ON', b'1')
         return float(self.value_pattern.search(data).group('value'))
 
     def execute_command(self, quantity, value):
         if quantity == 'setpoint':
             return self.commands['setSP'].format(ch=1, value=value)
+        if quantity == 'control_loop':
+            if value == 0:
+                return 'stop'
+            elif value == 1:
+                return 'control'
