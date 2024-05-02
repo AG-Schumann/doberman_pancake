@@ -33,7 +33,7 @@ class cryocon_26(LANDevice):
         if quantity == 'setpoint':
             return self.commands['setSP'].format(ch=1, value=value)
         if quantity == 'control_loop':
-            if value == 0:
+            if value == '0':
                 return 'stop'
-            elif value == 1:
+            elif value == '1':
                 return 'control'
