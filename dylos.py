@@ -19,7 +19,7 @@ class dylos(LANDevice):
         Takes the raw data as returned by send_recv and parses
         it for the float. Only for the scales.
         """
-        small, large = data.split(',')
+        small, large = data.decode().split(',')
 
         # let's convert to particles/m^3 already here
         conv = 0.01/0.3048**3  # 0.01/foot^3 to 1/m^3
