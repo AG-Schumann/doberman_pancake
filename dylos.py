@@ -22,7 +22,7 @@ class dylos(LANDevice):
         small, large = data.decode().split(',')
 
         # let's convert to particles/m^3 already here
-        conv = 0.01/0.3048**3  # 0.01/foot^3 to 1/m^3
+        conv = 0.353147  # 0.01/foot^3 to 1/m^3
         small = int(small) * conv
         large = int(large) * conv
         return [small, large]
